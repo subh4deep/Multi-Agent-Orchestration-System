@@ -6,6 +6,4 @@ from backend.app.graph.state import WorkflowState
 def planner_node(state: WorkflowState) -> dict:
     plan = create_plan(state["issue"])
 
-    return {
-        "plan": plan
-    }
+    return {"plan": plan}

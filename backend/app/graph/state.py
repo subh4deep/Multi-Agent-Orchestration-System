@@ -8,7 +8,7 @@ class WorkflowState(TypedDict):
     issue_number: int
     issue: dict
     repository_files: dict[str, str]
-    plan: list[str]
+    plan: dict
     patch: str
     test_results: list[str]
     retry_count: int
