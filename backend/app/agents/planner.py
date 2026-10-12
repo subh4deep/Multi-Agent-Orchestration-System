@@ -25,23 +25,34 @@ def create_plan(issue: dict) -> dict:
         groq_api_key=settings.groq_api_key,
     )
 
-    structured_llm = llm.with_structured_output(ImplementationPlan)
+    structured_llm = llm.with_structured_output(
+        ImplementationPlan,
+        method="json_schema",
+    )
+
+    
+    repository_files = issue.get("repository_files", {})
+
+    file_context = "\n\n".join(
+        f"File: {path}\n{content[:5000]}"
+        for path, content in list(repository_files.items())[:10]
+    )
 
     prompt = f"""
 You are a senior software engineer planning a code fix.
 
-Analyze this GitHub issue and propose a practical implementation plan.
+GitHub issue title: {issue.get("title", "")}
+GitHub issue description: {issue.get("body", "")}
 
-Issue title: {issue.get("title", "")}
-Issue description: {issue.get("body", "")}
+Repository source code:
+{file_context or "No repository source files were provided."}
 
-Requirements:
-- Provide a concise summary.
-- Include 3 to 5 actionable implementation steps.
-- Include relevant tests.
-- Do not invent repository details.
-- Do not write or modify code.
+Create a practical implementation plan based on the available code.
+Do not invent files or functions.
+Include 3 to 5 actionable steps and relevant tests.
+Do not write or modify code.
 """
+
 
     result = structured_llm.invoke(prompt)
     return result.model_dump()
