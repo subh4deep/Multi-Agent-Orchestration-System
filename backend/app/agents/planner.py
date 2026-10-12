@@ -1,9 +1,21 @@
 
+from pydantic import BaseModel, Field
 from langchain_groq import ChatGroq
+
 from backend.app.config import settings
 
 
-def create_plan(issue: dict) -> list[str]:
+class ImplementationPlan(BaseModel):
+    summary: str = Field(description="Short summary of the proposed fix")
+    steps: list[str] = Field(
+        description="Three to five actionable implementation steps"
+    )
+    testing: list[str] = Field(
+        description="Tests needed to verify the fix"
+    )
+
+
+def create_plan(issue: dict) -> dict:
     if not settings.groq_api_key:
         raise ValueError("GROQ_API_KEY is missing from .env")
 
@@ -13,31 +25,23 @@ def create_plan(issue: dict) -> list[str]:
         groq_api_key=settings.groq_api_key,
     )
 
-    prompt = f"""
-You are a software engineering planner.
+    structured_llm = llm.with_structured_output(ImplementationPlan)
 
-Analyze this GitHub issue and create a practical implementation plan.
+    prompt = f"""
+You are a senior software engineer planning a code fix.
+
+Analyze this GitHub issue and propose a practical implementation plan.
 
 Issue title: {issue.get("title", "")}
 Issue description: {issue.get("body", "")}
 
-Return 3 to 5 numbered steps.
-Each step must be a clear, actionable task.
-Include testing as one of the steps.
-Do not write code or modify files.
+Requirements:
+- Provide a concise summary.
+- Include 3 to 5 actionable implementation steps.
+- Include relevant tests.
+- Do not invent repository details.
+- Do not write or modify code.
 """
 
-    response = llm.invoke(prompt)
-
-    steps = []
-    for line in response.content.splitlines():
-        line = line.strip()
-        if line:
-            cleaned = line.lstrip("0123456789.-) ").strip()
-            if cleaned:
-                steps.append(cleaned)
-
-    if not steps:
-        raise ValueError("Planner returned an empty plan")
-
-    return steps
+    result = structured_llm.invoke(prompt)
+    return result.model_dump()
