@@ -1,4 +1,4 @@
-
+import json
 from langchain_groq import ChatGroq
 
 from backend.app.config import settings
@@ -20,9 +20,18 @@ def generate_patch(issue: dict, plan: dict) -> str:
         f"File: {path}\n{content[:8000]}"
         for path, content in list(repository_files.items())[:10]
     )
-
+    previous_feedback = json.dumps(
+        issue.get("previous_attempt_feedback", {}),
+        indent=2,
+    )
     prompt = f"""
 You are a careful software engineer fixing a GitHub issue.
+Previous attempt feedback:
+{previous_feedback}
+
+If previous feedback is available, fix the reported validation errors,
+patch application errors, or test failures. Do not repeat the same failed
+approach. Return a complete corrected unified diff patch.
 
 ISSUE TITLE:
 {issue.get("title", "")}

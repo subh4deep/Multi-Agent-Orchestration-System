@@ -10,6 +10,10 @@ class WorkflowState(TypedDict):
     repository_files: dict[str, str]
     plan: dict
     patch: str
-    test_results: list[str]
+    patch_validation: dict
+    patch_application: dict
+    test_results: list[dict]
+    tests_passed: bool
     retry_count: int
     approved: bool
+    project_info: dict | None

@@ -1,5 +1,4 @@
-
-from github import Github
+from github import Github, Auth
 from backend.app.config import settings
 
 
@@ -7,8 +6,8 @@ def get_github_client():
     if not settings.github_token:
         raise ValueError("GITHUB_TOKEN is missing from .env")
 
-    return Github(settings.github_token)
-
+    auth = Auth.Token(settings.github_token)
+    return Github(auth=auth)
 
 def fetch_issue(owner: str, repo_name: str, issue_number: int):
     client = get_github_client()
